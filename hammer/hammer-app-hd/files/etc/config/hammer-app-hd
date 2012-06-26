@@ -1,0 +1,18 @@
+config global 'general'
+	option enabled 0
+	option layout 'mbr-250'
+	option type 'overlay'
+	option device '/dev/sda'
+
+config mbr-250 'system'
+	option type 'ext4'
+	option uuid '2526b9d2-1d76-4920-9616-97b2cbd929b9'
+	option size '50G'
+	option number '5'
+
+config mbr-250 'backup'
+	option type 'ext4'
+	option uuid '2526b9d2-1d76-4920-9616-97b2cbd929b9'
+	option size '50G'
+	option number '5'
+

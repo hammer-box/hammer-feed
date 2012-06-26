@@ -1,0 +1,166 @@
+#!/bin/bash
+USERNAME="$( uci get hammer-mediatomb.web.username )"
+PASSWORD="$( uci get hammer-mediatomb.web.password )"
+WEBROOT="$( uci get hammer-mediatomb.web.webroot )"
+HOME_DIR="$( uci get hammer-mediatomb.startup.home )"
+NAME="$( uci get hammer-mediatomb.upnp.name )"
+UDN="$( uci get hammer-mediatomb.upnp.udn )"
+EXTEND_PROTOCOL="$( uci get hammer-mediatomb.upnp.extend_protocol )"
+HTTP_HEADERS=$( uci -d ';' get hammer-mediatomb.upnp.custom_http_headers )
+HTTP_HEADERS=${HTTP_HEADERS// /|}
+HTTP_HEADERS=( ${HTTP_HEADERS//;/ } )
+MANUFACURER_URL="$( uci get hammer-mediatomb.upnp.manufacturerURL )"
+STRING_LIMIT="$( uci get hammer-mediatomb.upnp.string_limit )"
+MODEL_NUMBER="$( uci get hammer-mediatomb.upnp.model_number )"
+CACHE="$( uci get hammer-mediatomb.storage.cache )"
+DB_FILE="$( uci get hammer-mediatomb.storage.db_file )"
+HEADER_STRING=''
+for header in ${HTTP_HEADERS[@]}
+do
+  HEADER_STRING=""${HEADER_STRING}"<custom-http-headers>
+      <add header=\""${header//|/ }"\"/>
+    </custom-http-headers>"
+done
+cat  << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<config version="2" xmlns="http://mediatomb.cc/config/2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://mediatomb.cc/config/2 http://mediatomb.cc/config/2.xsd"><!--
+     Read /usr/share/doc/mediatomb-common/README.gz section 6 for more
+     information on creating and using config.xml configration files.
+    -->
+  <server>
+    <ui enabled="yes" show-tooltips="yes">
+      <accounts enabled="yes" session-timeout="3600">
+        <account user="$USERNAME" password="$PASSWORD"/>
+      </accounts>
+    </ui>
+    <name>$NAME</name>
+   <name>$NAME</name>
+    <udn>$UDN</udn>
+    <home>$HOME_DIR</home>
+    <webroot>$WEBROOT</webroot>
+    <storage caching="$CACHE">
+      <sqlite3 enabled="yes">
+        <database-file>$DB_FILE</database-file>
+      </sqlite3>
+    </storage>
+    <protocolInfo extend="$EXTEND_PROTOCOL"/>
+
+    $HEADER_STRING
+
+    <manufacturerURL>$MANUFACURER_URL</manufacturerURL>
+    <modelNumber>$MODEL_NUMBER</modelNumber>
+    <!-- Uncomment the line below if you have a Telegent TG100 --><!--
+       <upnp-string-limit>$STRING_LIMIT</upnp-string-limit>
+    -->
+    <extended-runtime-options>
+      <ffmpegthumbnailer enabled="no">
+        <thumbnail-size>128</thumbnail-size>
+        <seek-percentage>5</seek-percentage>
+        <filmstrip-overlay>yes</filmstrip-overlay>
+        <workaround-bugs>no</workaround-bugs>
+      </ffmpegthumbnailer>
+      <mark-played-items enabled="no" suppress-cds-updates="yes">
+        <string mode="prepend">*</string>
+      </mark-played-items>
+    </extended-runtime-options>
+  </server>
+  <import hidden-files="no">
+    <scripting script-charset="UTF-8">
+      <common-script>/usr/share/mediatomb/js/common.js</common-script>
+      <playlist-script>/usr/share/mediatomb/js/playlists.js</playlist-script>
+      <virtual-layout type="builtin">
+     <import-script>/usr/share/mediatomb/js/import.js</import-script>
+        <dvd-script>/usr/share/mediatomb/js/import-dvd.js</dvd-script>
+      </virtual-layout>
+    </scripting>
+    <mappings>
+      <extension-mimetype ignore-unknown="no">
+         <map from="mp4" to="video/mp4"/>
+
+        <map from="ogg" to="application/ogg"/>
+        <map from="asf" to="video/x-ms-asf"/>
+        <map from="asx" to="video/x-ms-asf"/>
+        <map from="wma" to="audio/x-ms-wma"/>
+        <map from="wax" to="audio/x-ms-wax"/>
+        <map from="wmv" to="video/x-ms-wmv"/>
+        <map from="wvx" to="video/x-ms-wvx"/>
+        <map from="wm" to="video/x-ms-wm"/>
+        <map from="wmx" to="video/x-ms-wmx"/>
+        <map from="m3u" to="audio/x-mpegurl"/>
+        <map from="pls" to="audio/x-scpls"/>
+        <map from="flv" to="video/x-flv"/>
+        <map from="mkv" to="video/x-matroska"/>
+        <map from="mka" to="audio/x-matroska"/><!-- Uncomment the line below for PS3 divx support --><!-- <map from="avi" to="video/divx"/> --><!-- Uncomment the line below for D-Link DSM / ZyXEL D$
+      </extension-mimetype>
+      <mimetype-upnpclass>
+        <map from="audio/*" to="object.item.audioItem.musicTrack"/>
+        <map from="video/*" to="object.item.videoItem"/>
+        <map from="image/*" to="object.item.imageItem"/>
+        <map from="application/ogg" to="object.item.audioItem.musicTrack"/>
+      </mimetype-upnpclass>
+      <mimetype-contenttype>
+        <treat mimetype="audio/mpeg" as="mp3"/>
+        <treat mimetype="application/ogg" as="ogg"/>
+        <treat mimetype="audio/x-flac" as="flac"/>
+        <treat mimetype="image/jpeg" as="jpg"/>
+  <treat mimetype="audio/x-mpegurl" as="playlist"/>
+        <treat mimetype="audio/x-scpls" as="playlist"/>
+        <treat mimetype="audio/x-wav" as="pcm"/>
+        <treat mimetype="audio/L16" as="pcm"/>
+        <treat mimetype="video/x-msvideo" as="avi"/>
+        <treat mimetype="video/mp4" as="mp4"/>
+        <treat mimetype="audio/mp4" as="mp4"/>
+        <treat mimetype="application/x-iso9660" as="dvd"/>
+        <treat mimetype="application/x-iso9660-image" as="dvd"/>
+        <treat mimetype="video/x-matroska" as="mkv"/>
+        <treat mimetype="audio/x-matroska" as="mka"/>
+      </mimetype-contenttype>
+    </mappings>
+    <online-content><!-- Make sure to setup a transcoding profile for flv -->
+      <YouTube enabled="yes" refresh="28800" update-at-start="yes" purge-after="604800" racy-content="exclude" format="flv" hd="yes">
+        <favorites user="mediatomb"/>
+        <standardfeed feed="most_viewed" time-range="today"/>
+        <playlists user="mediatomb"/>
+        <uploads user="mediatomb"/>
+        <standardfeed feed="recently_featured" time-range="today"/>
+      </YouTube>
+      <Weborama enabled="yes" refresh="28800" update-at-start="yes">
+        <playlist name="Active" type="playlist" mood="active"/>
+        <playlist name="Metal" type="playlist">
+          <filter>
+            <genres>metal</genres>
+          </filter>
+        </playlist>
+      </Weborama>
+      <AppleTrailers enabled="yes" refresh="43200" update-at-start="yes" resolution="640"/>
+    </online-content>
+  </import>
+  <transcoding enabled="yes">
+    <mimetype-profile-mappings>
+  <transcode mimetype="video/x-flv" using="vlcmpeg"/>
+      <transcode mimetype="application/ogg" using="vlcmpeg"/>
+      <transcode mimetype="application/ogg" using="oggflac2raw"/>
+      <transcode mimetype="audio/x-flac" using="oggflac2raw"/>
+    </mimetype-profile-mappings>
+    <profiles>
+      <profile name="oggflac2raw" enabled="no" type="external">
+        <mimetype>audio/L16</mimetype>
+        <accept-url>no</accept-url>
+        <first-resource>yes</first-resource>
+        <accept-ogg-theora>no</accept-ogg-theora>
+        <agent command="ogg123" arguments="-d raw -o byteorder:big -f %out %in"/>
+        <buffer size="1048576" chunk-size="131072" fill-size="262144"/>
+      </profile>
+      <profile name="vlcmpeg" enabled="no" type="external">
+        <mimetype>video/mpeg</mimetype>
+        <accept-url>yes</accept-url>
+        <first-resource>yes</first-resource>
+        <accept-ogg-theora>yes</accept-ogg-theora>
+        <agent command="vlc" arguments="-I dummy %in --sout #transcode{venc=ffmpeg,vcodec=mp2v,vb=4096,fps=25,aenc=ffmpeg,acodec=mpga,ab=192,samplerate=44100,channels=2}:standard{access=file,mux=ps$
+        <buffer size="14400000" chunk-size="512000" fill-size="120000"/>
+      </profile>
+    </profiles>
+  </transcoding>
+</config>
+EOF
+

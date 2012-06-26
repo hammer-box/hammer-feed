@@ -1,0 +1,25 @@
+#! /bin/bash
+# get tor geoip file
+cd /var/lib/tor
+url="http://ip-to-country.webhosting.info/downloads/ip-to-country.csv.zip"
+geoipfile=${url##*/}
+csv=${geoipfile%.*}
+if wget -q "$url"
+    then
+       ret=0
+       unzip -q "$geoipfile"
+       cut -d, -f1-3 < "$csv" | sed 's/"//g' > geoip
+    else
+       ret=5
+fi
+if [ -f "$geoipfile" ] && [ -f "$csv" ]
+    then
+       rm -f "$geoipfile" "$csv"
+fi
+if [ $ret -gt 0 ]
+    then
+      exit 1
+    else
+      exit 0
+fi
+exit $ret

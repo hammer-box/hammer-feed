@@ -1,0 +1,42 @@
+#!/bin/bash
+CONFIG_DIR=/etc/nginx
+SITE=$1
+CURRENT_DIR=$( pwd )
+declare -i NUMBER=0
+cd $CONFIG_DIR/sites-available
+if [ -f  $SITE  ]
+then
+	cd $CONFIG_DIR/sites-enabled
+	for file in $( ls  *$SITE )
+	do
+		if [ -h $file ]
+		then
+				echo "$SITE already enabled"		
+				cd $CURRENT_DIR
+				exit 0
+		fi
+	done
+	for num in $( ls -r | grep -e '^[0-9][0-9][0-9]' | cut -d'-' -f1 )
+	do
+		declare -i NUMBER=$( $num )
+		(( NUMBER = $NUMBER +1 ))
+		break	
+	done
+	if [[ $num < 10 ]]
+	then
+		ln -s ../sites/available/$SITE "00"$num"-$site"
+	elif [[ $num < 100 ]]
+	then
+		ln -s ../sites/available/$SITE "0"$num"-$site"
+	else
+		ln -s ../sites/available/$SITE ""$num"-$site"
+	fi
+	echo "$SITE enabled"
+	echo "Reloading nginx"
+	/etc/init.d/nginx reload
+else
+	echo "$SITE not found in $CONFIG_DIR/sites-availabe" 2>&1
+	cd $CURRENT_DIR
+	exit 1
+fi
+

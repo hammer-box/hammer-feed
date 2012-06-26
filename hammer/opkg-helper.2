@@ -1,0 +1,328 @@
+#!/bin/bash
+source /etc/opkg-helper.conf
+declare -a OPKG_HELPER_AVAILABLE_PACKAGES=()
+declare -a OPKG_HELPER_UPGRADABLE_PACKAGES=()
+declare -a OPKG_HELPER_INSTALLED_PACKAGES=()
+
+declare -a OPKG_HELPER_AVAILABLE_VERSIONS=()
+declare -a OPKG_HELPER_UPGRADABLE_VERSIONS=()
+declare -a OPKG_HELPER_INSTALLED_VERSIONS=()
+OPKG_HELPER_INDEX=''
+OPKG_HELPER_SECTION_LENGTH=11
+OPKG_LIST_DIR="/var/opkg-list"
+OPKG_HELPER_PKGS_AND_VERSION_LENGTH=38
+declare -A OPKG_CONF
+function _pkgs_names()
+{
+        if [ ${1} = "available" ]
+	then
+		opkg list | cut -f1 -d' ' | tr -s '\n' ' '
+	elif [ ${1} = "upgradable" ]
+	then
+		opkg list-${1} | cut -f1 -d' ' | tr -s '\n' ' '
+	elif [ ${1} = "installed" ]
+	then
+		opkg list-${1} | cut -f1 -d' ' | tr -s '\n' ' '
+	else
+                echo "usage ${0} [available|upgradable|installed]"
+        fi
+
+}
+function _in_array() 
+{
+    local hay needle=$1
+    shift
+    for hay; do
+        [[ $hay == $needle ]] && return 0
+    done
+    return 1
+}
+function _pkgs_versions()
+{
+        if [ ${1} = "available" ]
+        then
+		opkg list | grep -v ^' ' | cut -f3 -d' ' | tr -s '\n' ' '
+        elif [ ${1} = "upgradable" ]
+        then
+		opkg list-${1} | grep -v ^' ' | cut -f3 -d' '  | tr -s '\n' ' '
+        elif [ ${1} = "installed" ]
+        then
+		opkg list-${1} | grep -v ^' ' | cut -f3 -d' '  | tr -s '\n' ' '
+	else
+		echo "usage ${0} [available|upgradable|installed]"
+	fi
+
+}
+function _parse_opkg_conf()
+{
+	local conf=( $( cat /etc/opkg.conf | grep -v ^# | tr ' ' ',' | tr '\n' ' ') )
+
+	for row in ${conf[@]}
+	do
+		local lastName=${rowArr[0]}
+		local rowArr=( $( _string_replace ${row} ) )
+		local name=${rowArr[0]}
+		if [ "${lastName}" = "${name}" ]
+		then
+			OPKG_CONF[${name}]+=","
+		fi
+		OPKG_CONF[${name}]+="[name]=${rowArr[1]} [value]=${rowArr[2]}"
+		
+	done
+	
+}
+function _string_replace()
+{
+	local haystack=${1-" "}
+	local needle=${2-","}
+	local replacement=${3-" "}
+	echo ${haystack//${needle}/${replacement} }
+}
+function _pkgs_installed()
+{
+	opkg list-installed	
+}
+
+argS="${*}"
+argA=( ${@} )
+
+function cmd_list-installed-packages()
+{	
+	#opkg status "${PACKAGES[@]}" | grep install
+	cat ${OPKG_HELPER_PKGS_INDEX_FILE} | grep ^I
+}
+function cmd_list-all()
+{
+#	echo "index:	status:		tname:	version:	repositry:"
+#	for i in ${!OPKG_HELPER_AVAILABLE_PACKAGES[*]}
+#	do
+#		echo "${i}	|$( _pkg_status ${OPKG_HELPER_AVAILABLE_PACKAGES[${i}]} )	|${OPKG_HELPER_AVAILABLE_PACKAGES[${i}]}"	${OPKG_HELPER_AVAILABLE_VERSIONS[${i}]}	
+#	done
+	cat ${OPKG_HELPER_PKGS_INDEX_FILE}
+}
+function _retrieve_description_from_pkg_name()
+{
+	cat /var/opkg-lists/martin | grep -A 15 "Package: ${1}$" | grep Description | sed 's/Description:  //'
+}
+function _retrieve_section_from_pkg_name()
+{
+	cat /var/opkg-lists/martin | grep -A 15 "Package: ${1}$" | grep Section | sed 's/Section: //'
+}
+function _build_pkgs_list()
+{
+	local dataString=''
+	local indexfile=/tmp/opkg-helper.index
+	echo "${dataString}" > $indexfile
+	local numberOfPackages=${#OPKG_HELPER_AVAILABLE_PACKAGES[*]}
+	local percent=0
+	local index=0
+	
+        dataString=$( printf "%-7s%-${OPKG_HELPER_SECTION_LENGTH}s%-${OPKG_HELPER_PKGS_AND_VERSION_LENGTH}s%-40s" "s:index" "|section" "|name - version" "|Description" )
+	echo "${dataString}" >> $indexfile	
+	echo "$( printf %-80s "-" | tr ' ' '-' )"  >> $indexfile
+	local padding=30
+        for (( i=0; i<${numberOfPackages}; i++ ))
+        do
+		index=$( expr ${index} + 1)
+		local pkgs_and_version="|${OPKG_HELPER_AVAILABLE_PACKAGES[${i}]} - ${OPKG_HELPER_AVAILABLE_VERSIONS[${i}]}"
+                local leftCol="$( _pkg_status ${OPKG_HELPER_AVAILABLE_PACKAGES[${i}]} ):$index"
+		local description="|$( _retrieve_description_from_pkg_name ${OPKG_HELPER_AVAILABLE_PACKAGES[${i}]})"
+		local section="|$( _retrieve_section_from_pkg_name ${OPKG_HELPER_AVAILABLE_PACKAGES[${i}]} )"
+		dataString="$(printf "%-7s%-${OPKG_HELPER_SECTION_LENGTH}s%-${OPKG_HELPER_PKGS_AND_VERSION_LENGTH}s%-40s" "${leftCol}" "${section}" "${pkgs_and_version}" "${description}" )"		
+		echo "${dataString}" >> $indexfile
+
+#		if [ "${i}" = "30" ]
+##		then
+#			
+#			echo "[${percent}%]Inspecting package ${i} of ${numberOfPackages}"
+# #       		percent=$( expr ${percent} + 1 )
+#
+#		fi
+        done
+	mv $indexfile ${OPKG_HELPER_PKGS_INDEX_FILE}
+#	_write_pkgs_cache "${dataString}"
+}
+function _pkg_status()
+{
+	local ret
+	_in_array ${1} "${OPKG_HELPER_INSTALLED_PACKAGES[@]}" 
+	if [ ${?} == 0 ]
+	then
+		_in_array ${1} "${OPKG_HELPER_UPGRADABLE_PACKAGES[@]}"
+		if [ ${?} == 0 ]
+		then
+			ret="U"
+			echo ${ret}
+			return 0
+		else
+			ret="I"
+			echo ${ret}
+			return 0
+
+		fi
+	else
+
+		ret="P"
+		echo ${ret}
+		return 0
+
+	fi
+	echo "E"
+	
+
+}
+function _write_pkgs_cache()
+{
+	echo "${OPKG_HELPER_INDEX}" > $OPKG_HELPER_PKGS_INDEX_FILE
+}
+function cmd_search()
+{
+	cat ${OPKG_HELPER_PKGS_INDEX_FILE} | grep ${1}	
+}
+function _read_pkgs_cache()
+{
+	echo "Not implemented"
+}
+function _check_numeric_list()
+{
+	local regexp='^[1-9]{1}[0-9]?+\-?([1-9]{1}[0-9]?+)?$'
+	if [[ ${1} =~ ${regexp} ]]
+	then
+		return 0
+	else
+		return 1
+	fi
+}
+function _retrieve_pkg_by_index()
+{
+#	cat ${OPKG_HELPER_PKGS_INDEX_FILE} | grep ^"${1}," | cut -f3 -d','
+	cat ${OPKG_HELPER_PKGS_INDEX_FILE} | grep "${1}" | cut -d'|' -f3 | cut -d' ' -f1
+}
+function _string_contains()
+{
+	local string="${1}"
+	if [[ "$string" == *"${2}"* ]]
+	then
+		return 0
+	else
+		return 1
+	fi
+}
+function cmd_install()
+{
+	local pkgsArgs=( ${@:2} )
+	local pkgs=()
+	for arg in ${pkgsArgs[@]}
+	do
+		_check_numeric_list ${arg}	
+		if [ $? = 0 ]
+		then
+			_string_contains ${arg} '-'
+			if [ $? = 0 ]
+			then
+				local low=${arg%%-*}
+				local high=${arg##*-}
+				if [ "${low}" -ge "${high}" ]
+				then
+					local lowt=${low}
+					low=${high}
+					high=${lowt}
+				fi
+				for (( i=${low};i<=${high};i++ ))
+				do
+					pkgs=( ${pkgs[@]} $(_retrieve_pkg_by_index ${i}) )	
+				done
+			else
+				pkgs=(${pkgs[@]} $(_retrieve_pkg_by_index ${arg} ) ) 
+			
+			fi
+		else
+			pkgs=(${pkgs[@]} ${arg} )
+		fi
+	done
+	echo "Marked the following packages for installation"
+	echo "${pkgs[@]}"
+	_prompt 'Do you want to proceed? [y/n]'
+	if [ $? = 0 ]
+	then
+		opkg install ${pkgs[@]}
+	else
+		echo "Canceled installation"
+	fi
+	
+}
+function _prompt()
+{
+	
+	local question=${1-"Yes or No!?"}
+	local errorMessage=${2-"You st0pid or what smurf!?"}
+	echo "-"
+	while read -e -p "${question}" answer
+	do
+		case $answer in
+			[yY]* )	return 0;;
+			[nN]* )	return 1;;
+			* ) echo "$errorMessage"
+		esac
+	done
+			
+}
+function cmd_list-section()
+{
+	
+	local search_term=${@:2}
+	if [  -z "${search_term}"  ]
+	then
+		PS3="Pick a category: "
+		select search_term in multimedia utils net ipv6 base libs luci luci2 mail lang language-python lang-python xorg-libraries devel sound admin video shells kernel
+		do
+			echo "Yahooo"
+			break;
+		done
+	fi
+	local space_repeat=$( expr ${OPKG_HELPER_SECTION_LENGTH} - ${#search_term} - 1 )
+	cat ${OPKG_HELPER_PKGS_INDEX_FILE} |  grep -E  "\|${search_term}{1}.{${space_repeat}}\|"
+
+}
+function cmd_usage()
+{
+	echo "${0} [list-all|update|list-installed|list-section [multimedia|sound|utils|net|mail|language-python|lang-python|ipv6|base|libs|luci|xorg-libraries|video|shells|devel|luci2|lang|admin|kernel]|search pkgs name|sysupgrade]"
+}
+function cmd_sysupgrade()
+{
+	echo "WARNING THIS HAS NOT BEEN TESTED!!!"
+	 _prompt 'Do you want to proceed? [y/n]'
+        if [ $? = 0 ]
+        then
+		opkg upgrade $( opkg list-upgradable | awk '($1 !~ "^kmod|Multiple") {print $1}' )
+		echo "If the modules installed ok you should now perform a sysupgrade with squashfs image to flash the new kernel"
+
+        else
+                echo "Canceled sysupgrade"
+        fi
+
+#some force options might be needed but i dont know which http://wiki.openwrt.org/doc/howto/extroot ( bottom page )
+
+}
+function cmd_update()
+{
+	opkg update
+	_parse_opkg_conf	
+	OPKG_HELPER_AVAILABLE_PACKAGES=( $( _pkgs_names available ) )
+	OPKG_HELPER_UPGRADABLE_PACKAGES=( $( _pkgs_names upgradable ) )
+	OPKG_HELPER_INSTALLED_PACKAGES=( $( _pkgs_names installed ) )
+
+	OPKG_HELPER_AVAILABLE_VERSIONS=( $( _pkgs_versions available ) )
+	OPKG_HELPER_UPGRADABLE_VERSIONS=( $( _pkgs_versions upgradable ) )
+	OPKG_HELPER_INSTALLED_VERSIONS=( $( _pkgs_versions installed ) )
+	_build_pkgs_list
+	
+
+}
+cmd=${1-usage}
+#cmd_update
+cmd_"${cmd}" ${@}
+
+#cmd_installed_packages
+#opkg status ${PACKAGE[@]}
+

@@ -1,0 +1,395 @@
+#!/bin/bash
+### User Settings (things you must set)
+## Location of the dnscurl.pl script
+
+DNSCurl="/path/to/route53DynDNS/dnscurl.pl"
+
+## The host name you wish to update/create
+
+myHostName="*"
+
+## Zone/domain in which host (will) reside(s)
+
+myDomainName="example.com"
+
+
+
+##########################################
+
+
+
+### Things you may want to set
+
+## set the TTL for the new/updated A record
+
+myTTL="600"
+
+route53API="https://route53.amazonaws.com/2011-05-05"
+
+route53APIDoc="https://route53.amazonaws.com/doc/2011-05-05/"
+
+
+
+##########################################
+
+
+
+### Thing you shouldn't change
+
+
+
+## how long to wait after submitting a change
+
+## before checking to see if it's state is
+
+## INSYNC
+
+sleepDelay=20
+
+
+
+##########################################
+
+
+
+### Code... don't change anything below.
+
+
+
+
+
+## Get the Hosted Zone ID from Route 53
+
+hostedZoneIDSearch="ListHostedZonesResponse/HostedZones/HostedZone[Name=\"$myDomainName.\"]/Id"
+
+route53HostedZoneID=`$DNSCurl --keyname my-aws-account -- -s -H "Content-Type: text/xml; charset=UTF-8" -X GET $route53API/hostedzone 2>/dev/null | xpath -e $hostedZoneIDSearch 2>/dev/null |awk -F'[<|>]' '/Id/{print $3}' | cut -d/ -f3`
+
+
+
+if [ -z $route53HostedZoneID ]; then
+
+        echo "Could not find zone '$myDomainName' in route 53"
+
+#        exit 1
+
+fi
+
+
+
+## Check to see if the A record already exists
+
+currentARecordValueSearch="ListResourceRecordSetsResponse/ResourceRecordSets/ResourceRecordSet[Name=\"$myHostName.$myDomainName.\"]/ResourceRecords/ResourceRecord/Value"
+
+
+
+if [[ "$myHostName" == "*" ]]; then
+
+  currentARecordValueSearch="ListResourceRecordSetsResponse/ResourceRecordSets/ResourceRecordSet[Name=\"\\052.$myDomainName.\"]/ResourceRecords/ResourceRecord/Value"
+
+fi
+
+
+
+currentARecordValue=`$DNSCurl --keyname my-aws-account -- -s -H "Content-Type: text/xml; charset=UTF-8" -X GET $route53API/hostedzone/$route53HostedZoneID/rrset 2>/dev/null | xpath -e $currentARecordValueSearch 2>/dev/null | awk -F'[<|>]' '/Value/{print $3}' | cut -d/ -f3`
+
+
+
+## And if not, set a flag to create the A record
+
+if [ -z $currentARecordValue ]; then
+
+        echo "Could not find A RR for $myHostName.$myDomainName."
+
+        echo "Creating initial record"
+
+        CREATE_INITIAL=true
+
+fi
+
+
+
+## Route 53 updates require the A record name, ttl and value for the delete.
+
+## Fetch the TTL
+
+currentARecordTTLSearch="ListResourceRecordSetsResponse/ResourceRecordSets/ResourceRecordSet[Name=\"$myHostName.$myDomainName.\"]/TTL"
+
+
+
+if [[ "$myHostName" == "*" ]]; then
+
+  currentARecordTTLSearch="ListResourceRecordSetsResponse/ResourceRecordSets/ResourceRecordSet[Name=\"\\052.$myDomainName.\"]/TTL"
+
+fi
+
+
+
+currentARecordTTL=`$DNSCurl --keyname my-aws-account -- -s -H "Content-Type: text/xml; charset=UTF-8" -X GET $route53API/hostedzone/$route53HostedZoneID/rrset 2>/dev/null | xpath -e $currentARecordTTLSearch 2>/dev/null | awk -F'[<|>]' '/TTL/{print $3}' | cut -d/ -f3`
+
+
+
+if [ -z $currentARecordTTL ]; then
+
+        CREATE_INITIAL=true
+
+fi
+
+
+
+## Get the public IP
+
+myPublicIP=`wget -q -O - checkip.dyndns.org|sed -e 's/.*Current IP Address: //' -e 's/<.*$//'`
+
+
+
+if [ -z $myPublicIP ]; then
+
+        echo "Failed to look up public IP address"
+
+        exit 1
+
+fi
+
+
+
+## Generate a timestamp for the update
+
+timestamp=`date`
+
+
+
+## Give some status
+
+echo "Public IP address is: $myPublicIP"
+
+
+
+## If the DNS A RR matched the public IP, exit
+
+if [[ "$myPublicIP" == "$currentARecordValue" ]]; then
+
+        echo "Current A RR IP address is: $currentARecordValue"
+
+        echo "No need to update A record."
+
+        exit 0
+
+fi
+
+
+
+## Get a temp file
+
+tmpxml=`mktemp`
+
+#CREATE_INITIAL=false
+
+## Determine if the A RR is to be created or updated (deleted/created)
+
+if [ $CREATE_INITIAL ]; then
+
+echo "Creating A record for $myHostName.$myDomainName. to be $myPublicIP"
+
+cat <<UPDATE-XML > $tmpxml
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ChangeResourceRecordSetsRequest xmlns="$route53APIDoc">
+
+        <ChangeBatch>
+
+                <Comment>Create Record for $myHostName.$myDomainName at $timestamp</Comment>
+
+                <Changes>
+
+                        <Change>
+
+                                <Action>CREATE</Action>
+
+                                <ResourceRecordSet>
+
+                                        <Name>$myHostName.$myDomainName.</Name>
+
+                                        <Type>A</Type>
+
+                                        <TTL>$myTTL</TTL>
+
+                                        <ResourceRecords>
+
+                                                <ResourceRecord>
+
+                                                        <Value>$myPublicIP</Value>
+
+                                                </ResourceRecord>
+
+                                        </ResourceRecords>
+
+                                </ResourceRecordSet>
+
+                        </Change>
+
+                </Changes>
+
+        </ChangeBatch>
+
+</ChangeResourceRecordSetsRequest>
+
+UPDATE-XML
+
+
+
+else 
+
+echo "A Record for $myHostName.$myDomainName. is $currentARecordValue with ttl: $currentARecordTTL"
+
+echo "Updating A record for $myHostName.$myDomainName. to be $myPublicIP with ttl $myTTL"
+
+cat <<UPDATE-XML > $tmpxml
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ChangeResourceRecordSetsRequest xmlns="$route53APIDoc">
+
+        <ChangeBatch>
+
+                <Comment>Update Record for $myHostName.$myDomainName at $timestamp</Comment>
+
+                <Changes>
+
+                        <Change>
+
+                                <Action>DELETE</Action>
+
+                                <ResourceRecordSet>
+
+                                        <Name>$myHostName.$myDomainName.</Name>
+
+                                        <Type>A</Type>
+
+                                        <TTL>$currentARecordTTL</TTL>
+
+                                        <ResourceRecords>
+
+                                                <ResourceRecord>
+
+                                                        <Value>$currentARecordValue</Value>
+
+                                                </ResourceRecord>
+
+                                        </ResourceRecords>
+
+                                </ResourceRecordSet>
+
+                        </Change>
+
+                        <Change>
+
+                                <Action>CREATE</Action>
+
+                                <ResourceRecordSet>
+
+                                        <Name>$myHostName.$myDomainName.</Name>
+
+                                        <Type>A</Type>
+
+                                        <TTL>$myTTL</TTL>
+
+                                        <ResourceRecords>
+
+                                                <ResourceRecord>
+
+                                                        <Value>$myPublicIP</Value>
+
+                                                </ResourceRecord>
+
+                                        </ResourceRecords>
+
+                                </ResourceRecordSet>
+
+                        </Change>
+
+                </Changes>
+
+        </ChangeBatch>
+
+</ChangeResourceRecordSetsRequest>
+
+UPDATE-XML
+
+fi
+
+
+
+## Do the actual create/update
+
+updateResponse=`$DNSCurl --keyname my-aws-account -- -s -H "Content-Type: text/xml; charset=UTF-8" -X POST --upload-file $tmpxml $route53API/hostedzone/$route53HostedZoneID/rrset 2>/dev/null`
+
+## And record the response
+
+updateResponseStatus=`echo $updateResponse | xpath -e 'ChangeResourceRecordSetsResponse/ChangeInfo/Status' 2>/dev/null |awk -F'[<|>]' '/Status/{print $3}' | cut -d/ -f3`
+
+
+
+## Make sure the response is "PENDING"
+
+## Otherwise, error
+
+if [[ "$updateResponseStatus" != "PENDING" ]]; then
+
+        echo "Update is not in PENDING status"
+
+        echo $updateResponse
+
+        rm -f $tmpxml
+
+        exit 1
+
+fi
+
+
+
+## Get the transaction ID
+
+updateResponseID=`echo $updateResponse | xpath -e 'ChangeResourceRecordSetsResponse/ChangeInfo/Id' 2>/dev/null | awk -F'[<|>]' '/Id/{print $3}' | cut -d/ -f3`
+
+
+
+echo "Got update status ID $updateResponseID with status $updateResponseStatus"
+
+echo "Pausing $sleepDelay seconds to allow for sync"
+
+sleep $sleepDelay
+
+
+
+## Check for status
+
+statusCheckResponse=`$DNSCurl --keyname my-aws-account -- -s -H "Content-Type: text/xml; charset=UTF-8" -X GET  $route53API/change/$updateResponseID 2>/dev/null`
+
+
+
+statusCheckResponseStatus=`echo $statusCheckResponse | xpath -e 'GetChangeResponse/ChangeInfo/Status' 2>/dev/null | awk -F'[<|>]' '/Status/{print $3}' | cut -d/ -f3`
+
+
+
+if [[ "$statusCheckResponseStatus" != "INSYNC" ]]; then
+
+        echo "update failed!"
+
+        echo "Status is $statusCheckResponseStatus"
+
+        rm -f $tmpxml
+
+        exit 1
+
+fi
+
+
+
+## Success, clean up
+
+echo "Success!"
+
+rm -f $tmpxml
+
+exit 0

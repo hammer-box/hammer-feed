@@ -1,0 +1,265 @@
+export HAMMER_BASH_LIB=/usr/lib/hammer/bash
+export HAMMER_DATA=/usr/lib/hammer/data
+
+source $HAMMER_BASH_LIB/utils.functions
+function base.OwnerIsConfigured()
+{
+	echo $HAMMER_DATA/owner.configured 
+}
+function base.CAIsConfigured()
+{
+	echo $HAMMER_DATA/CA.configured 
+}
+function base.CopySkelToRoot()
+{
+	shopt -s dotglob
+	cp -a /etc/skel/* /root
+}
+
+function base.configureCA()
+{
+if [ $( base.CAIsConfigured ) = "1" ]
+	then
+		echo "Allready configured" >&2
+		return 1
+	fi
+[[ $4 ]] || (echo "All required arguments are not set" >&2 && return 1)
+	local cipher=${1-"des3"}
+	local bits=${2-"1024"}
+	local valid=${3-"3650"}
+	local password="${4}"
+	uci set hammer.CA="openssl"
+	uci set hammer.CA.cipher="${cipher}"
+	uci set hammer.CA.bits="${bits}"
+	uci set hammer.CA.key_name="CA.key"
+	uci set hammer.CA.certificate_name="CA.crt"
+	uci set hammer.CA.password="${password}"
+	uci set hammer.CA.req_days="${valid}"
+	uci set hammer.CA.serial=1
+	uci commit hammer
+	echo "1" > $HAMMER_DATA/CA.configured 
+}
+function base.promptOwnerInfo()
+{
+	local PROMPTS=( \
+	 'Device name: '\
+	 "Forename: "\
+	 "surname: "\
+	 "email: "\
+	 "hammer_id: "\	 
+	 "city: "\
+	 "postcode: "\
+	 "country: "\
+	 "state: "\
+	 "mobile: "\
+	 "Domain: "\
+	 )
+	local ANSWERS=()
+	for prompt in "${PROMPTS[@]}"
+	do
+		while true
+		do
+			read  -e -p "${prompt}" answer
+			if [ -z "${answer}" ]
+			then
+				echo "This field is mandatory"
+			else
+				ANSWERS+=( "${answer}" )
+				break;
+			fi
+		done
+	done
+	local pwVerify
+	while true
+	do
+		read -e -p "Password: " pw
+		if [ -z $pwVerify ]
+		then
+			pwVerify=$pw
+			echo "Re enter to verify"
+		elif [ "$pwVerify" = "$pw" ]
+		then
+			echo "passwords match"
+			ANSWERS+=( $pw )
+			break
+		else
+			echo "Passwords missmatch, try again"
+			unset pwVerify
+		fi
+		
+	done
+	base.configureOwner ${ANSWERS[@]}
+}
+function base.promptCertInfo()
+{
+	[[ $1 ]] ||  ( echo "You must supply a name" >&2 && return 1 )
+	local PROMPTS=( \
+ "Cipher: "\
+ "Bits: "\
+ "Valid for how many days: "\
+ )
+	 local DEFAULTS=( \
+ "des3"\
+ "1024"\
+ "3650"\
+ )
+	local ANSWERS=()
+	local -i counter=0
+	for prompt in "${PROMPTS[@]}"
+	do
+		while true
+		do
+			read -e -i "${DEFAULTS[$counter]}" -p "${prompt}" answer 
+			if [ -z "${answer}" ]
+			then
+				echo "This field is mandatory"
+			else
+				ANSWERS+=( "${answer}" )
+				(( counter++ ))
+				break;
+			fi
+		done
+	done
+	local pwVerify
+	while true
+	do
+		read -e -p "Password: " pw
+		if [ -z $pwVerify ]
+		then
+			pwVerify=$pw
+			echo "Re enter to verify"
+		elif [ "$pwVerify" = "$pw" ]
+		then
+			echo "passwords match"
+			ANSWERS+=( $pw )
+			break
+		else
+			echo "Passwords missmatch, try again"
+			unset pwVerify
+		fi
+		
+	done
+	base.configureCert $1 ${ANSWERS[@]}
+}
+
+function base.promptCaInfo()
+{
+	
+	local PROMPTS=( \
+ "Cipher: "\
+ "Bits: "\
+ "Valid for how many days: "\
+ )
+	 local DEFAULTS=( \
+ "des3"\
+ "1024"\
+ "3650"\
+ )
+	local ANSWERS=()
+	local -i counter=0
+	for prompt in "${PROMPTS[@]}"
+	do
+		while true
+		do
+			read -e -i "${DEFAULTS[$counter]}" -p "${prompt}" answer 
+			if [ -z "${answer}" ]
+			then
+				echo "This field is mandatory"
+			else
+				ANSWERS+=( "${answer}" )
+				(( counter++ ))
+				break;
+			fi
+		done
+	done
+	local pwVerify
+	while true
+	do
+		read -e -p "Password: " pw
+		if [ -z $pwVerify ]
+		then
+			pwVerify=$pw
+			echo "Re enter to verify"
+		elif [ "$pwVerify" = "$pw" ]
+		then
+			echo "passwords match"
+			ANSWERS+=( $pw )
+			break
+		else
+			echo "Passwords missmatch, try again"
+			unset pwVerify
+		fi
+		
+	done
+	base.configureCA ${ANSWERS[@]}
+}
+function base.configureOwner()
+{
+	if [ $( base.OwnerIsConfigured ) = "1" ]
+	then
+		echo "Allready configured" >&2
+		return 1
+	fi
+		
+	( [[ $1 ]] && [[ $4 ]] && [[ $5 ]] && [[ $6 ]] && [[ $8 ]] && [[ $9 ]] &&  [[ ${11} ]] && [[ ${12}	 ]] ) || ( echo "All required arguments are not set" >&2 && return 1 )
+		uci set hammer.owner="general"
+		uci set hammer.owner.device_name="${1}"
+		uci set hammer.owner.forename="${2}"
+		uci set hammer.owner.surname="${3}"
+		uci set hammer.owner.email="${4}"
+		uci set hammer.owner.hammer_id="${5}"
+		uci set hammer.owner.city="${6}"
+		uci set hammer.owner.postcode="${7}"
+		uci set hammer.owner.country="${8}"
+		uci set hammer.owner.state="${9}"
+		uci set hammer.owner.mobile="${10}"
+		uci set hammer.owner.domain="${11}"
+		uci set hammer.owner.hammer_passwd="${12}"
+		uci set hammer.owner.home="/home/${5}"
+		uci commit hammer
+		echo "1" > $HAMMER_DATA/owner.configured 
+		mkdir -p /home/${5}
+		groupadd -r sudo
+		groupadd -g 1000 ${5}
+		useradd  -u 1000 -g ${5} -G sudo  -d /home/${5} -s /bin/bash  ${5}
+		echo -e ""${12}"\n"${12}"\n" | passwd ${5}
+		touch /tmp/sudoers.new
+		chmod 440 /tmp/sudoers.new
+		cat /etc/sudoers | sed -e 's/^# %sudo/%sudo/' > /tmp/sudoers.new
+		visudo -q -c -s -f /tmp/sudoers.new
+		if [[ $? > 0 ]]
+		then
+			echo "New sudoers file failed to validate. Users does not have SUDO!" >&2
+		else
+			mv /tmp/sudoers.new /etc/sudoers
+		fi
+		uci set system.@system[0].hostname="${1}"
+		uci commit system
+		uci set dhcp.cfg02411c.domain="${1}"."${11}"
+		uci commit dhcp
+		shopt -s dotglob
+		cp -a /etc/skel/* /home/${5}
+		chown -R ${5}:${5} "/home/${5}"
+
+}
+
+function base.configureCert()
+{
+	( [[ $1 ]] && [[ $5 ]] ) || (echo "All required arguments are not set" >&2 && return 1)
+	local name=${1}	
+	local cipher=${2-"des3"}
+	local bits=${3-"1024"}
+	local valid=${4-"3650"}
+	local password="${5}"
+	uci set hammer.${name}="openssl"
+	uci set hammer.${name}.cipher="${cipher}"
+	uci set hammer.${name}.bits="${bits}"
+	uci set hammer.${name}.key_name="${name}.key"
+	uci set hammer.${name}.certificate_name="${name}.crt"
+	uci set hammer.${name}.request_name="${name}.csr"
+	uci set hammer.${name}.password="${password}"
+	uci set hammer.${name}.req_days="${valid}"
+	uci commit hammer
+	echo "1" > $HAMMER_DATA/CA.configured 
+}
+

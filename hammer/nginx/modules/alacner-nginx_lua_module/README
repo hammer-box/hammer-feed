@@ -1,0 +1,7 @@
+-- example:
+
+    lua_file "/usr/local/nginx/conf/test.lua";
+
+    location ~/test {
+        lua_file "/usr/local/nginx/conf/test.lua";
+    }

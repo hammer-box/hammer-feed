@@ -1,0 +1,41 @@
+#!/bin/sh /etc/rc.common
+START=50
+STOP=50
+
+SERVICE_USE_PID=1
+
+start() 
+{
+	local user=$( uci get tor-hammer.general.user )
+	local group=$( uci get tor-hammer.general.group )
+	
+	[ -f /var/run/tor.pid ] || {
+		touch /var/run/tor.pid
+		chown $user:$group /var/run/tor.pid
+	}
+	[ -d /var/lib/tor ] || {
+		mkdir -m 0755 -p /var/lib/tor
+		chmod 0700 /var/lib/tor
+		chown $user:$group /var/lib/tor
+	}
+	[ -d /var/log/tor ] || {
+		mkdir -m 0755 -p /var/log/tor
+		chown $user:$group /var/log/tor
+	}
+	/usr/sbin/tor-helper iptables
+	/usr/sbin/tor-helper torrc > $(uci get tor-hammer.general.config_file)
+#	if [ -f /var/lib/tor/geoip ]
+#	then
+#		echo 'geoip db found'
+#	else
+#		echo 'geo ip db not found. Downloading'
+#		/usr/sbin/geoip
+#	fi
+	service_start /usr/sbin/tor --PidFile /var/run/tor.pid -f $(uci get tor-hammer.general.config_file)
+	chown tor:tor $(uci get tor-hammer.general.config_file)
+}
+
+stop() {
+	service_stop /usr/sbin/tor
+	/etc/init.d/firewall reload
+}

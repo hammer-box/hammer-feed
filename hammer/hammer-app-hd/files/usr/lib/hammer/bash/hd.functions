@@ -1,0 +1,154 @@
+#!/bin/bash
+function hd.isConfigured()
+{
+	echo /usr/lib/hammer/data/hd.configured
+}
+function hd.deletePartionTable()
+{
+	uci set fstab.automount.anon_mount=0
+	uci set fstab.autoswap.anon_swap=0
+	uci commit fstab
+	for partition in $( mount | grep /dev/sda | cut -d' ' -f1 )
+	do
+		umount $partition
+		if [[ $? > 0 ]]
+		then 
+			umount -r $partition
+			umount $partition
+			if [[ $? > 0 ]]
+			then
+				echo "Cant unmount $partition giving up" >&2
+				return $?
+			fi
+		fi
+	done
+
+	dd if=/dev/sda of=/tmp/mbr-backup.bin bs=2048 count=1 conv=notrunc
+	sfdisk -d /dev/sda > /tmp/extended.backup.sf
+	dd if=/dev/zero of=/dev/sda  bs=2048  count=1 conv=notrunc
+	echo 1 > /sys/block/sda/device/rescan 
+	
+}
+
+function hd.insertNew250GBMBR()
+{
+	dd if=/usr/share/hd-layouts/mbr.250.bin of=/dev/sda bs=2048 count=1 conv=notrunc
+	sfdisk /dev/sda < /usr/share/hd-layouts/extended.250GB.sf
+	echo 1 > /sys/block/sda/device/rescan 
+	sleep 5
+}
+
+function hd.formatOverlayPartion()
+{
+	echo "Creating system/overlay partion"
+	mkfs.ext4 -L system /dev/sda5
+	if [[ $? > 0 ]]
+	then
+		while true 
+		do
+			echo "Cant find device. unplug and plug it again"
+			sleep 5
+			mkfs.ext4 -L system /dev/sda5
+			if [[ $? == 0 ]]
+			then
+				break
+			fi
+		done
+	fi
+	tune2fs -i 0 -c 0 /dev/sda5
+}
+function hd.formatBackupPartion()
+{
+	sleep 5
+	echo "Creating backup partion"
+	mkfs.ext4 -L backup /dev/sda6
+	tune2fs -i 0 -c 0 /dev/sda6
+}
+function hd.formatHomePartion()
+{
+	sleep 5
+	echo "Creating home partion"
+	mkfs.ext4 -L home /dev/sda7
+	tune2fs -i 0 -c 0 /dev/sda7
+}
+function hd.makeSwapPartion()
+{
+	sleep 5
+	echo "Creating swap partion"
+	mkswap -L swap /dev/sda8
+}
+	
+	
+function hd.cleanFstab()
+{
+	while true
+	do
+		status=uci delete fstab.@swap[0]
+		if [[ $? > 0 ]]
+		then
+			break
+		fi
+	done
+	while true
+	do
+		status=uci delete fstab.@mount[0]
+		if [[ $? > 0 ]]
+		then
+			break
+		fi
+	done
+	uci commit fstab
+}
+
+function hd.createNewFstab()
+{	
+	deviceData="$( blkid | grep /dev/sda )"
+	uci set fstab.system=mount
+	uci set fstab.system.target=/overlay
+	uci set fstab.system.uuid=$( echo "$deviceData" | grep system | cut -d'"' -f4 )
+	uci set fstab.system.enabled=1
+	uci set fstab.system.fstype=$( echo "$deviceData" | grep system | cut -d'"' -f6 )
+	uci set fstab.system.options=rw,sync
+	uci set fstab.system.enable_fsck=0
+	mkdir -p /backups
+	uci set fstab.backup=mount
+	uci set fstab.backup.target=/backups
+	uci set fstab.backup.uuid=$( echo "$deviceData" | grep backup | cut -d'"' -f4 )
+	uci set fstab.backup.enabled=1
+	uci set fstab.backup.fstype=$( echo "$deviceData"| grep backup | cut -d'"' -f6 )
+	uci set fstab.backup.options=rw,sync
+	uci set fstab.backup.enable_fsck=0
+	mkdir -p /home
+	uci set fstab.home=mount
+	uci set fstab.home.target=/home
+	uci set fstab.home.uuid=$( echo "$deviceData" | grep home | cut -d'"' -f4 )
+	uci set fstab.home.enabled=1
+	uci set fstab.home.fstype=$( echo "$deviceData" | grep home | cut -d'"' -f6 )
+	uci set fstab.home.options=rw,sync
+	uci set fstab.home.enable_fsck=0
+	
+	uci set fstab.primary=swap
+	uci set fstab.primary.uuid=$( echo "$deviceData" | grep swap | cut -d'"' -f4 )
+	uci set fstab.primary.enabled=1
+	uci commit fstab
+}
+
+function hd.copyOverlay()
+{
+
+	mount -t ext4 /dev/sda5 /mnt
+	tar -C /overlay -cvf - . | tar -C /mnt -xf -
+	sync
+	umount /mnt
+	echo "Done! You should now copy home"
+	
+}
+
+function hd.copyHome()
+{
+	mount -t ext4 /dev/sda7 /mnt
+	tar -C /home -cvf - . | tar -C /mnt -xf -
+	sync
+	umount /mnt
+	echo "Done! You should now reboot"
+}

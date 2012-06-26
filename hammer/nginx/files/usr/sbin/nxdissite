@@ -1,0 +1,25 @@
+#!/bin/bash
+CONFIG_DIR=/etc/nginx
+SITE=$1
+CURRENT_DIR=$( pwd )
+cd $CONFIG_DIR/sites-available
+if [ -f  $SITE  ]
+then
+	cd $CONFIG_DIR/sites-enabled
+	for file in $( ls  *$SITE )
+	do
+		if [ -h $file ]
+		then
+			rm $file
+			echo "$SITE disabled"
+			/etc/init.d/nginx reload
+		fi
+	done
+	cd $CURRENT_DIR
+	exit 0
+else
+	echo "$SITE not found in $CONFIG_DIR/sites-availabe" 2>&1
+	cd $CURRENT_DIR
+	exit 1
+fi
+

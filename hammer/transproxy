@@ -1,0 +1,109 @@
+#!/bin/bash
+# This file is interpreted as shell script.
+# Put your custom iptables rules here, they will
+# be executed with each firewall (re-)start.
+# -i, --in-interface name
+#              Name of an interface via which a packet was received (only for packets entering the INPUT, FORWARD and PREROUTING chains).  When the "!" argument  is  used  before  the  interface
+#              name,  the  sense is inverted.  If the interface name ends in a "+", then any interface which begins with this name will match.  If this option is omitted, any interface name will
+#              match.
+#
+# -o, --out-interface name
+#              Name of an interface via which a packet is going to be sent (for packets entering the FORWARD, OUTPUT and POSTROUTING chains).  When the "!" argument is used before the  interface
+#              name,  the  sense is inverted.  If the interface name ends in a "+", then any interface which begins with this name will match.  If this option is omitted, any interface name will
+#Â              match.
+conf_index=${2}
+ 
+FW_TOR_IGNORE_NETWORKS=( $( uci get firewall.@transproxy[${conf_index}].ignorenetworks ) )
+FW_TOR_IGNORE_USERS=(  $( uci get firewall.@transproxy[${conf_index}].ignoreusers ) )
+FW_TOR_IGNORE_OUT_INTERFACES=(  $( uci get firewall.@transproxy[${conf_index}].ignoreoutinterfaces ) )
+FW_TOR_INTERFACES=( $( uci get firewall.@transproxy[${conf_index}].interfaces ) )
+FW_TOR_TRANS_PORT=(  $( uci get firewall.@transproxy[${conf_index}].port ) )
+
+function get_uid ()
+{
+	echo $( cat /etc/passwd | grep ${1} | cut -f3 -d: )
+}
+function trans_start ()
+{
+echo "running $( uci get firewall.@transproxy[${conf_index}].startcmd )"
+$( uci get firewall.@transproxy[${conf_index}].startcmd )
+
+#This is will ignore interfaces defined in $FW_TOR_IGNORE_INTERFACES
+echo "[TOR TRANS] adding ignored out interfaces interface(s) ${FW_TOR_IGNORE_OUT_INTERFACES[@]}"
+for interface in ${FW_TOR_IGNORE_OUT_INTERFACES[@]}
+do
+	iptables -t nat -A OUTPUT --out-interface $interface -j RETURN
+#	echo "iptables -t nat -A OUTPUT --out-interface $interface -j RETURN"
+done
+
+#This will ignore users defined in $FW_TOR_IGNORE_USERS
+echo "[TOR TRANSPARENT PROXY] Ignoring users(s) ${FW_TOR_IGNORE_USERS[@]}"
+for user in ${FW_TOR_IGNORE_USERS[@]}
+do
+	iptables -t nat -A OUTPUT -m owner --uid-owner $user -j RETURN
+#	echo "iptables -t nat -A OUTPUT -m owner --uid-owner $( get_uid $user ) -j RETURN"
+done
+#THIS WILL IGNORE NETWORS DEFINED IN $FW_TOR_IGNORE_NETWORKS
+echo "[TOR TRANSPARENT PROXY] ignoring network(s) ${FW_TOR_IGNORE_NETWORKS[@]} on interface(s) ${FW_TOR_INTERFACES[@]}"
+for net in ${FW_TOR_IGNORE_NETWORKS[@]}
+do
+	iptables -t nat -A OUTPUT -d $net -j RETURN
+#	echo "iptables -t nat -A OUTPUT -d $net -j RETURN"
+	for interface in ${FW_TOR_INTERFACES[@]}
+	do
+		iptables -t nat -A PREROUTING --in-interface $interface -d $net -j RETURN 
+#		echo "iptables -t nat -A PREROUTING --in-interface $interface -d $net -j RETURN"
+	done
+done
+
+#WE DONT KNOW WHAT tcp syn is. LOOK UP TCP SYN! THINK IT WILL ONLY APPLY TO NEW CONNECTIONS. ie NOT BREAK A DOWNLOAD
+echo "[TOR TRANSPARENT PROXY] That syn stuff"
+iptables -t nat -A OUTPUT -p tcp --syn -j REDIRECT --to-ports $FW_TOR_TRANS_PORT
+#echo "iptables -t nat -A OUTPUT -p tcp --syn -j REDIRECT --to-ports $FW_TOR_TRANS_PORT"
+#This would do DNS lookups but we dont enable this for now.
+#iptables -t nat -A PREROUTING -i $INT_IF -p udp --dport 53 -j REDIRECT --to-ports 53
+
+#THIS WILL  REROUTE ALL TRAFFIC TO ALL
+echo "[TOR TRANSPROXY] Rerouting all other traffic to tor in interface(s) ${FW_TOR_INTERFACES[@]}"
+for interface in ${FW_TOR_INTERFACES[@]}
+do
+	iptables -t nat -A PREROUTING -i $interface -p tcp --syn -j REDIRECT --to-ports $FW_TOR_TRANS_PORT
+#	echo "iptables -t nat -A PREROUTING -i $interface -p tcp --syn -j REDIRECT --to-ports $FW_TOR_TRANS_PORT"
+
+done
+
+#I DONT KNOW WHAT THIS DOES!
+echo "[TOR TRANSPROXY] State stuff i dont understand"
+iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+#echo "iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT"
+echo "[TOR TRANSPORXY] Accepting output on network(s) ${FW_TOR_IGNORE_NETWORKS[@]}"
+for net in ${FW_TOR_IGNORE_NETWORKS[@]}
+do
+	iptables -A OUTPUT -d $net -j ACCEPT
+#	echo "iptables -A OUTPUT -d $net -j ACCEPT"
+done
+echo "[TOR TRANSPROXY] Accepting output for users  ${FW_TOR_IGNORE_USERS[@]}"
+for user in ${FW_TOR_IGNORE_USERS[@]}
+do
+	iptables -A OUTPUT -m owner --uid-owner $( get_uid $user ) -j ACCEPT
+#	echo "iptables -A OUTPUT -m owner --uid-owner $( get_uid $user ) -j ACCEPT"
+done
+#echo "[TOR TRANSPROXY] REJECTING ALL OTHER OUTPUT I GUESS?!?!" 
+iptables -A OUTPUT -j REJECT
+echo "iptables -A OUTPUT -j REJECT"
+}
+function trans_stop ()
+{
+
+	#running $( uci get firewall.@transproxy[${conf_index}].startcmd )
+	$( uci get firewall.@transproxy[${conf_index}].startcmd )
+
+}
+
+
+#iptables -t nat -A OUTPUT -m owner 
+#iptables -t  nat -A OUTPUT  -d 127.0.0.0/8 -j RETURN
+#iptables -t  nat -A OUTPUT  -d 192.168.2.0/24
+#iptables -t nat -A PREROUTING -i br-lan -p tcp --syn -j REDIRECT --to-ports 9040
+
+trans_${1}

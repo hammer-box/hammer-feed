@@ -1,0 +1,33 @@
+function ssh.newKey()
+{
+	local username=$1
+	local passphrase=$2
+	local domain=$( uci get hammer.owner.domain ) 
+	local device_name=$( uci get hammer.owner.device_name )
+	local hammer_id=$( uci get hammer.owner.hammer_id )
+	mkdir -p /home/$username/.ssh
+	ssh-keygen -q -b 2048 -t rsa -N "$passphrase" -C $username@$device_namr.$hammer_id.$domain -f /home/$1/.ssh/$username
+	
+	uci set hammer.owner.ssh_pub="$(cat /home/$username/.ssh/$username.pub)"
+	uci commit
+	cat /home/$username/.ssh/$username
+	rm /home/$username/.ssh/$username
+	rm /home/$username/.ssh/$username.pub
+}
+
+function ssh.authorizeKey()
+{
+	local username="$1"
+	local publickey="$2"
+	mkdir -p /home/$username/.ssh
+	echo "$publickey" >> /home/$username/.ssh/authorized_keys
+	chown $username:$username -R /home/$username/.ssh
+	chmod 700  -R /home/fishdaemon/.ssh
+
+}
+
+function ssh.secureServer()
+{
+
+	cat /etc/ssh/sshd_config | sed -e 's/^#PermitRootLogin yes/PermitRootLogin yes/' | sed -e 's/^#StrictModes yes/StrictModes yes/' | sed -e 's/^#RSAAuthentication yes/RSAAuthentication yes/' | sed -e 's/^#PubkeyAuthentication yes/PubkeyAuthentication yes/' | sed -e 's/^#PasswordAuthentication yes/PasswordAuthentication no/' | sed -e 's/^#PermitEmptyPasswords no/PermitEmptyPasswords no/' | sed -e 's/^AuthorizedKeysFile\t.ssh\/authorized_keys/AuthorizedKeysFile\t%h\/.ssh\/authorized_keys/' > /tmp/sshd_conf.new && cp /tmp/sshd_conf.new /etc/ssh/sshd_config && /etc/init.d/sshd reload
+}

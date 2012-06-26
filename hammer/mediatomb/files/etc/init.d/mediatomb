@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+USER_ID=80
+GROUP_ID=80
+SYS_USER=$( uci get hammer-mediatomb.startup.user )
+SYS_GROUP=$( uci get hammer-mediatomb.startup.group )
+START=80
+APP=mediatomb
+MT_CONF=$( uci get hammer-mediatomb.startup.config )
+mkdir $MT_CONF
+MT_HOME=$( uci get hammer-mediatomb.startup.home )
+WORKING_DIR=$( uci get hammer-mediatomb.startup.working_dir )
+ADDS=""
+for fod in $( uci get hammer-mediatomb.startup.add )
+do
+  ADDS="$ADDS --add $fod"
+done
+mkdir -p $WORKING_DIR
+PID_FILE=$WORKING_DIR/$APP.pid
+MT_ARGUMENTS="--ip $( uci get hammer-mediatomb.startup.ip ) --interface $( uci get hammer-mediatomb.startup.interface ) --config $MT_CONF --daemon --home $MT_HOME --cfgdir $( uci get hammer-mediatomb.startup.cfgdir ) --pidfile $PID_FILE --user $SYS_USER --group $SYS_GROUP   $ADDS"
+/usr/sbin/mediatomb-generate-config > $MT_CONF
+
+start() {
+  user_exists $SYS_USER $USER_ID || user_add $SYS_USER $USER_ID $MT_HOME
+  group_exists $SYS_GROUP $GROUP_ID || $SYS_GROUP $GROUP_ID
+  
+  start-stop-daemon -S -x $APP $MT_ARGUMENTS -p $PID_FILE -m -b
+}
+
+stop() {
+        start-stop-daemon -K -n $APP -p $PID_FILE -s TERM
+        rm -rf $PID_FILE
+}

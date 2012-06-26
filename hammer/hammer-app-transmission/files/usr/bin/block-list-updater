@@ -1,0 +1,6 @@
+#!/bin/bash
+
+function cmd_dl
+{
+	wget -q http://list.iblocklist.com/?list=bt_level1&fileformat=p2p&archiveformat=gz
+}

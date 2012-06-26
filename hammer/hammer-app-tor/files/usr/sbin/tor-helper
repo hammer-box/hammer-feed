@@ -1,0 +1,104 @@
+#!/bin/bash
+# This file is interpreted as shell script.
+# Put your custom iptables rules here, they will
+# be executed with each firewall (re-)start.
+# -i, --in-interface name
+#              Name of an interface via which a packet was received (only for packets entering the INPUT, FORWARD and PREROUTING chains).  When the "!" argument  is  used  before  the  interface
+#              name,  the  sense is inverted.  If the interface name ends in a "+", then any interface which begins with this name will match.  If this option is omitted, any interface name will
+#              match.
+#
+# -o, --out-interface name
+#              Name of an interface via which a packet is going to be sent (for packets entering the FORWARD, OUTPUT and POSTROUTING chains).  When the "!" argument is used before the  interface
+#              name,  the  sense is inverted.  If the interface name ends in a "+", then any interface which begins with this name will match.  If this option is omitted, any interface name will
+#             match.
+
+ 
+FW_TOR_IGNORE_NETWORKS=( $( uci get tor-hammer.general.ignored_networks ) )
+FW_TOR_IGNORE_USERS=(  $( uci get tor-hammer.general.ignored_users ) )
+FW_TOR_IGNORE_OUT_INTERFACES=(  $( uci get tor-concept.general.ignore_out_interfaces ) )
+FW_TOR_INTERFACES=( $( uci get tor-hammer.general.interfaces ) )
+FW_TOR_TRANS_PORT=(  $( uci get tor-hammer.torrc.TransPort ) )
+FW_TOR_DNS_PORT=( $( uci get tor-hammer.torrc.DNSPort ) )
+function get_uid ()
+{
+	echo $( cat /etc/passwd | grep ${1} | cut -f3 -d: )
+}
+
+function cmd_iptables ()
+{
+  #This is will ignore interfaces defined in $FW_TOR_IGNORE_INTERFACES
+  for interface in ${FW_TOR_IGNORE_OUT_INTERFACES[@]}
+  do
+	  iptables -t nat -A OUTPUT --out-interface $interface -j RETURN
+  done
+
+  #This will ignore users defined in $FW_TOR_IGNORE_USERS
+
+  for user in ${FW_TOR_IGNORE_USERS[@]}
+  do
+	 iptables -t nat -A OUTPUT -m owner --uid-owner $( get_uid $user ) -j RETURN
+  done
+  #THIS WILL IGNORE NETWORS DEFINED IN $FW_TOR_IGNORE_NETWORKS
+  
+  for net in ${FW_TOR_IGNORE_NETWORKS[@]}
+  do
+	  iptables -t nat -A OUTPUT -d $net -j RETURN
+  	for interface in ${FW_TOR_INTERFACES[@]}
+  	do
+  		iptables -t nat -A PREROUTING --in-interface $interface -d $net -j RETURN
+  	done
+  done
+
+  #WE DONT KNOW WHAT tcp syn is. LOOK UP TCP SYN! THINK IT WILL ONLY APPLY TO NEW CONNECTIONS. ie NOT BREAK A DOWNLOAD
+
+  iptables -t nat -A OUTPUT -p tcp --syn -j REDIRECT --to-ports $FW_TOR_TRANS_PORT
+  #This would do DNS lookups but we dont enable this for now.
+  #iptables -t nat -A PREROUTING -i $INT_IF -p udp --dport 53 -j REDIRECT --to-ports 9053
+
+  #THIS WILL  REROUTE ALL TRAFFIC TO ALL
+
+  for interface in ${FW_TOR_INTERFACES[@]}
+  do
+    iptables -t nat -A PREROUTING -i $interface -p tcp --syn -j REDIRECT --to-ports $FW_TOR_TRANS_PORT
+    iptables -t nat -A PREROUTING -i $interface -p udp --dport 53 -j REDIRECT --to-ports $FW_TOR_DNS_PORT
+  done
+
+  #I DONT KNOW WHAT THIS DOES!
+  iptables -A OUTPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+  for net in ${FW_TOR_IGNORE_NETWORKS[@]}
+  do
+	  iptables -A OUTPUT -d $net -j ACCEPT
+  done
+  for user in ${FW_TOR_IGNORE_USERS[@]}
+  do
+    iptables -A OUTPUT -m owner --uid-owner $( get_uid $user ) -j ACCEPT
+  done
+
+ iptables -A OUTPUT -j REJECT
+
+}
+function cmd_torrc()
+{
+  local confFile=$( uci get tor-hammer.general.config_file )
+
+  for row in $( uci show tor-hammer.torrc | cut -d'.' -f3-9999999  )
+  do
+    echo ${row} | tr '=' ' '
+  done
+  
+
+  if [ $( uci get tor-hammer.general.exit_enabled ) = 1 ]
+  then
+    echo "ExitNodes "$( uci get tor-hammer.$( uci get tor-hammer.general.exit_group ).node | tr ' ' ',')  
+  fi
+  if [ $( uci get tor-hammer.general.entry_enabled ) = 1 ]
+  then
+    echo "EntryNodes "$( uci get tor-hammer.$( uci get tor-hammer.general.entry_group ).node | tr ' ' ',') 
+  fi   
+}
+function cmd_usage()
+{
+  echo "${0} torrc|iptables"
+}
+cmd=${1-"usage"}
+"cmd_"$cmd

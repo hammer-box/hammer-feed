@@ -1,0 +1,688 @@
+Source-Makefile: feeds/hammer/hammer-app-blocklist/Makefile
+Package: hammer-app-blocklist
+Version: 1-1
+Depends: +libc +hammer-app-base
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: blocklist
+Category: H.A.M.M.E.R
+Title: Enables blocklist on for your H.A.M.M.E.R
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: blocklist for hammer
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-feng-office/Makefile
+Package: hammer-app-feng-office
+Version: 1-1
+Depends: +libc +hammer-app-hd
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: feng-office support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with feng-office
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-hd/Makefile
+Package: hammer-app-hd
+Version: 1-1
+Depends: +libc +hammer-app-base +kmod-usb2 +kmod-usb-storage-extras +kmod-usb-storage +kmod-usb-ohci +kmod-ide-core +kmod-ledtrig-usbdev +usbutils +kmod-usb-core +hotplug2 +blkid +kmod-fs-ext4 +e2fsprogs +kmod-scsi-core +kmod-scsi-generic +bash +kmod-fs-vfat +kmod-fs-msdos +sfdisk +fdisk +coreutils-dd +tar +swap-utils +smartd +smartmontools +kmod-fuse +tune2fs
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: audio
+Category: H.A.M.M.E.R
+Title: Enables audio on for your H.A.M.M.E.R
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Audio for hammer
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/shellinabox/Makefile
+Package: shellinabox
+Version: 2.14-1
+Depends: +libc +hammer-app-base
+Menu-Depends: 
+Provides: 
+Build-Depends: +hammer-app-base
+Section: net
+Category: H.A.M.M.E.R
+Title: shellinabox
+Maintainer: fishdaemon
+Source: shellinabox-2.14.tar.gz
+Type: ipkg
+Description: Shell In A Box implements a web server that can export arbitrary command line tools to a web based terminal emulator. This emulator is accessible to any JavaScript and CSS enabled web browser and does not require any additional browser plugins. Most typically, login shells would be exported this way:
+http://code.google.com/p/shellinabox
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-webtv-mediathek/Makefile
+Package: hammer-app-webtv-mediathek
+Version: 1-1
+Depends: +libc +hammer-app-webtv-enabler
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: webtv-mediathek support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with webtv-mediathek
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/mediatomb/Makefile
+Package: mediatomb
+Version: 0.12.1-1
+Depends: +libc +libexif +libsqlite3 +id3lib +libiconv +file +libpthread +libjs +js +libffmpeg-full +libstdcpp
+Menu-Depends: 
+Provides: 
+Build-Depends: +libexif +libsqlite3 +id3lib +libiconv +file  +libpthread +libjs +js  +libffmpeg-full +libstdcpp !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: multimedia
+Category: H.A.M.M.E.R
+Title: uPnP server
+Maintainer: fishdaemon
+Source: mediatomb-0.12.1.tar.gz
+Type: ipkg
+Description:   uPnP media servers for the hammer
+http://mediatomb.cc
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-oneye/Makefile
+Package: hammer-app-oneye
+Version: 0.8.0-1
+Depends: +libc +hammer-app-hd +php5-fastcgi +php5-mod-apc +php5-mod-json +php5-mod-xml +php5-mod-mbstring +php5-mod-zip +php5-mod-gd +php5-mod-sqlite3 +php5-mod-pdo-sqlite +curl +libcurl +php5-mod-curl +php5-mod-pdo +php5-mod-ctype +php5-mod-iconv +php5-mod-session +php5-mod-soap +php5-mod-simplexml +php5-mod-sockets +php5-mod-tokenizer
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: oneye support
+Maintainer: fishdaemon
+Source: oneye_0.8.0.zip
+Type: ipkg
+Description: Use your hammer with oneye
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-lan-bridge/Makefile
+Package: hammer-app-lan-bridge
+Version: 1-1
+Depends: +libc +hammer-app-routing
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: lan-bridge support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with lan-bridge
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-routing/Makefile
+Package: hammer-app-routing
+Version: 1-1
+Depends: +libc +hammer-app-base
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: audio
+Category: H.A.M.M.E.R
+Title: Enables advanced transparent routing on for your H.A.M.M.E.R
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Advanced routing bindings
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-openvpn/Makefile
+Package: hammer-app-openvpn
+Version: 1-1
+Depends: +libc +hammer-app-routing
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: openvpn support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with openvpn
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-mediatomb/Makefile
+Package: hammer-app-mediatomb
+Version: 1-1
+Depends: +libc +hammer-app-hd +mediatomb
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: mediatomb support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with mediatomb
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-tor/Makefile
+Package: hammer-app-tor
+Version: 1-1
+Depends: +libc +hammer-app-base +tor +tor-geoip +iptables-mod-extra +iptables-mod-geoip +iptables-mod-nat-extra +iptables-mod-tproxy
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: storage
+Category: H.A.M.M.E.R
+Title: Enables Advanced TOR settings for your H.A.M.M.E.R
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Advanced tor settings
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-dropbox/Makefile
+Package: hammer-app-dropbox
+Version: 1-1
+Depends: +libc +hammer-app-proto-translation +hammer-app-storage
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: dropbox support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with dropbox
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-webtv-iplayer/Makefile
+Package: hammer-app-webtv-iplayer
+Version: 1-1
+Depends: +libc +hammer-app-webtv-enabler
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: webtv-iplayer support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with webtv-iplayer
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/tor/Makefile
+Package: tor
+Version: 0.2.2.35-2
+Depends: +libc +libevent2 +libopenssl +libpthread +librt
+Menu-Depends: 
+Provides: 
+Section: net
+Category: Network
+Title: An anonymous Internet communication system
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Source: tor-0.2.2.35.tar.gz
+Type: ipkg
+Description: An anonymous Internet communication system
+https://www.torproject.org/
+OpenWrt Developers Team <openwrt-devel@openwrt.org>
+@@
+
+Package: tor-geoip
+Version: 0.2.2.35-2
+Depends: +libc +tor
+Menu-Depends: 
+Provides: 
+Section: net
+Category: Network
+Title: GeoIP db for tor
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Source: tor-0.2.2.35.tar.gz
+Type: ipkg
+Description: GeoIP db for tor
+https://www.torproject.org/
+OpenWrt Developers Team <openwrt-devel@openwrt.org>
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-base/Makefile
+Package: hammer-app-base
+Version: 1-4
+Depends: +libc +bash +bash-completion +openssl-util +luci-lib-lucid +nginx +php5-fastcgi +libsqlite3 +coreutils +php5-cli +shadow-useradd +shadow +shadow-userdel +shadow-usermod +coreutils-users +sudo +coreutils-groups +coreutils-chgrp +sed +coreutils-dd
+Menu-Depends: 
+Provides: 
+Build-Depends: +bash-completion +openssl-util +luci-lib-lucid +nginx +php5-fastcgi +libsqlite3 +php5-cli +coreutils +php5 !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: base
+Category: H.A.M.M.E.R
+Title: Contains base files for H.A.M.M.E.R
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Base stuff for hammer
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-mediagoblin/Makefile
+Package: hammer-app-mediagoblin
+Version: 1-1
+Depends: +libc +hammer-app-hd
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: mediagoblin support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with mediagoblin
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/appweb/Makefile
+Package: appweb
+Submenu: Web Servers/Proxies
+Version: 3.3.2-0-1
+Depends: +libc @!avr32 +libpthread
+Menu-Depends: 
+Provides: 
+Section: net
+Category: Network
+Title: Appweb Web Server
+Maintainer: OpenWrt Developers Team <openwrt-devel@openwrt.org>
+Source: appweb-src-3.3.2-0.tgz
+Type: ipkg
+Description:  Appweb is a powerful, compact embedded web server designed for dynamic web
+ applications.
+http://www.appwebserver.org/
+OpenWrt Developers Team <openwrt-devel@openwrt.org>
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-webtv-svtplay/Makefile
+Package: hammer-app-webtv-svtplay
+Version: 1-1
+Depends: +libc +hammer-app-webtv-enabler
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: webtv-svtplay support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with webtv-svtplay
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-market/Makefile
+Package: hammer-app-market
+Version: 1-1
+Depends: +libc +hammer-app-storage
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: market support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with market
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-audio/Makefile
+Package: hammer-app-audio
+Version: 1-1
+Depends: +libc +hammer-app-base
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: audio
+Category: H.A.M.M.E.R
+Title: Enables audio on for your H.A.M.M.E.R
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Audio for hammer
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-google-drive/Makefile
+Package: hammer-app-google-drive
+Version: 1-1
+Depends: +libc +hammer-app-proto-translation +hammer-app-storage
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: google drive support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with google-drive
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-tor-exitnodes/Makefile
+Package: hammer-app-tor-exitnodes
+Version: 1-1
+Depends: +libc +hammer-app-tor
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: networking
+Category: H.A.M.M.E.R
+Title: Exit node configurations 
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: subscribe to exit nodes for hammer tor.
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-owncloud/Makefile
+Package: hammer-app-owncloud
+Version: 4.0.2-1
+Depends: +libc +hammer-app-hd +php5-fastcgi +php5-mod-apc +php5-mod-json +php5-mod-xml +php5-mod-mbstring +php5-mod-zip +php5-mod-gd +php5-mod-sqlite3 +php5-mod-pdo-sqlite +curl +libcurl +php5-mod-curl +php5-mod-pdo +php5-mod-ctype +php5-mod-iconv +php5-mod-session +php5-mod-soap +php5-mod-simplexml +php5-mod-sockets +php5-mod-tokenizer +nginx
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: owncloud support
+Maintainer: fishdaemon
+Source: owncloud-4.0.2.tar.bz2
+Type: ipkg
+Description: Use your hammer with owncloud
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-backup/Makefile
+Package: hammer-app-backup
+Version: 1-1
+Depends: +libc +hammer-app-proto-translation +hammer-app-storage
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: Backup
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer for backups
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-webtv-enabler/Makefile
+Package: hammer-app-webtv-enabler
+Version: 1-1
+Depends: +libc +hammer-app-routing
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: webtv-enabler support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with webtv-enabler
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-webtv-hulu/Makefile
+Package: hammer-app-webtv-hulu
+Version: 1-1
+Depends: +libc +hammer-app-webtv-enabler
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: webtv-hulu support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with webtv-hulu
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-samba/Makefile
+Package: hammer-app-samba
+Version: 1-1
+Depends: +libc +hammer-app-proto-translation +hammer-app-storage
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: samba support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with samba
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-proto-translation/Makefile
+Package: hammer-app-proto-translation
+Version: 1-1
+Depends: +libc +hammer-app-base
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: Enables your H.A.M.M.E.R to translate between different protocols
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Enables your H.A.M.M.E.R to translate between different protocols. ie Import a rtmp stream and export it as upnp. Or Export a samba share as upnp
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/nginx/Makefile
+Package: nginx
+Menu: 1
+Submenu: Web Servers/Proxies
+Version: 1.2.1-2
+Depends: +libc +libpcre +libopenssl +zlib +libxslt +liblua +libxml2
+Menu-Depends: 
+Provides: 
+Build-Depends: +libpcre +libopenssl +zlib +libxslt +liblua +libpthread  +libcryptoxx +libevent2-openssl +libevent2-extra +libevent2-core +libevent2 +libevent +libxml2
+Section: server
+Category: H.A.M.M.E.R
+Title: Nginx web server
+Maintainer: fishdaemon
+Source: nginx-1.2.1.tar.gz
+Type: ipkg
+Description:   Nginx is a free, open-source, high-performance HTTP server
+  and reverse proxy, as well as an IMAP/POP3 proxy server,
+  written by Igor Sysoev.
+http://nginx.org/
+fishdaemon
+@@
+Config:
+  source "feeds/hammer/nginx/Config.in"
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-transmission/Makefile
+Package: hammer-app-transmission
+Version: 1-1
+Depends: +libc +hammer-app-hd +luci-app-transmission
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: transmission support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with transmission
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-diaspora/Makefile
+Package: hammer-app-diaspora
+Version: 1-1
+Depends: +libc +hammer-app-hd
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: diaspora support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with diaspora
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-storage/Makefile
+Package: hammer-app-storage
+Version: 1-1
+Depends: +libc +hammer-app-base
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: storage
+Category: H.A.M.M.E.R
+Title: Enables additional storage on for your H.A.M.M.E.R
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Storage bindings for hammer
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-s3/Makefile
+Package: hammer-app-s3
+Version: 1-1
+Depends: +libc +hammer-app-proto-translation +hammer-app-storage
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: s3 support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with s3
+http://tarpediem.net
+fishdaemon
+@@
+
+
+Source-Makefile: feeds/hammer/hammer-app-pxe/Makefile
+Package: hammer-app-pxe
+Version: 1-1
+Depends: +libc +hammer-app-hd
+Menu-Depends: 
+Provides: 
+Build-Depends: !BUILD_NLS:libiconv !BUILD_NLS:gettext
+Section: system
+Category: H.A.M.M.E.R
+Title: pxe support
+Maintainer: fishdaemon
+Source: 
+Type: ipkg
+Description: Use your hammer with pxe
+http://tarpediem.net
+fishdaemon
+@@
+
+

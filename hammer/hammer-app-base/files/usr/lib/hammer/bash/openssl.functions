@@ -1,0 +1,72 @@
+function openssl.makeInsecureKey()
+{
+
+	local section=${1-"default"}
+	local password=$( uci get hammer.${section}.password ) 
+	local file_name=$(uci get hammer.owner.home )/.secrets/$(uci get hammer.${section}.key_name )
+	echo $password | openssl rsa -in $file_name  -passin stdin -out $file_name.insecure
+}
+function openssl.newKey()
+{
+	local section=${1-"CA"}
+	local password=$( uci get hammer.${section}.password ) 
+	local cipher=$( uci get hammer.${section}.cipher )
+	local file_name=$(uci get hammer.owner.home )/.secrets/$(uci get hammer.${section}.key_name )
+	local bits=$( uci get hammer.${section}.bits )
+	mkdir -p $(uci get hammer.owner.home )/.secrets
+	echo $password | openssl genrsa -passout stdin -$cipher -out $file_name $bits
+}
+function openssl.newSigningRequest()
+{
+	local section=${1-"default"}
+	local password=$( uci get hammer.${section}.password ) 
+	local hammer_id=$( uci get hammer.owner.hammer_id ) 
+	local device_name=$( uci get hammer.owner.device_name )
+	local domain=$( uci get hammer.owner.domain )
+	local days=$( uci get hammer.${section}.req_days )
+	local country=$( uci get hammer.owner.country )
+	local key_file=$(uci get hammer.owner.home )/.secrets/$(uci get hammer.${section}.key_name )
+	local req_file=$(uci get hammer.owner.home )/.secrets/$section.csr
+	local subject="/C="$country"/CN="$section.$device_name"."$hammer_id"."$domain""
+	echo $password | openssl req -new -key ${key_file} -passin stdin -days $days -subj "$subject" -out $req_file
+}
+function openssl.newCA()
+{
+	local ca_home=$( uci get hammer.owner.home ) 
+	local hammer_id=$( uci get hammer.owner.hammer_id ) 
+	local domain=$( uci get hammer.owner.domain )
+	local days=$( uci get hammer.CA.req_days )
+	local key_file=$ca_home/.secrets/$( uci get hammer.CA.key_name )
+	local cert_file=$ca_home/$( uci get hammer.CA.certificate_name )
+	local hammer_id=$( uci get hammer.owner.hammer_id )
+ 	local domain=$( uci get hammer.owner.domain )
+  local country=$( uci get hammer.owner.country )
+
+	local subject="/C="$country"/CN="$hammer_id"."$domain""
+	local password=$( uci get hammer.CA.password ) 
+		
+	echo $password | openssl req -new -subj "$subject" -x509 -passin stdin -days $days -key $key_file -out  $cert_file
+}
+
+function openssl.signRequest()
+{
+	local req_file=$(uci get hammer.owner.home )/.secrets/${1}.csr
+	local ca_home=$( uci get hammer.owner.home ) 
+	local key_file=$ca_home/.secrets/$( uci get hammer.CA.key_name )
+	local ca_cert=$ca_home/$( uci get hammer.CA.certificate_name )
+	local -i serial=$( uci get hammer.CA.serial )
+	local password=$( uci get hammer.CA.password )
+	mkdir -p $ca_home/signed
+	local out_cert=$ca_home/signed/${1}.crt
+	echo $password | openssl x509 -req -in $req_file -CA $ca_cert -CAkey $key_file  -set_serial $serial -out $out_cert -passin stdin
+	local status=$?
+	if [[ $status == 0 ]]
+	then
+		(( serial = serial +1 ))
+		uci set hammer.CA.serial=$serial
+		uci commit hammer
+	else
+		echo "Something went wrong code $status" 2>&1
+		return $status
+	fi
+}

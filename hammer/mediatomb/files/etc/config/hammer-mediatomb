@@ -1,0 +1,33 @@
+config global 'startup'
+  option 'ip' '192.168.11.1'
+  option 'interface' 'br-lan'
+  
+  option 'working_dir' '/var/run/mediatomb'
+  option 'config' '/var/mediatomb/config.xml'
+  option 'home' '/home/apps/mediatomb'
+  option 'user' 'mediatomb'
+  option 'group' 'mediatomb'
+  option 'cfgdir' '/usr/share/mediatomb'
+  list 'add' '/hd/storage/media/video'
+  list 'add' '/hd/storage/media/music'
+  list 'add' '/hd/storage/media/images'
+  list 'add' '/hd/storage/dropbox/tux.png'
+  
+config global 'web'
+  option username 'hammer'
+  option password 'hammer'
+  option webroot '/srv/mediatomb'
+  
+config global 'upnp'
+  option name 'H.A.M.M.E.R'
+  option udn 'uuid:034dc0ec-f492-4667-a043-f1ffc2298313'
+  option extend_protocol 'yes'
+  list 'custom_http_headers' 'X-User-Agent: HAMMER'
+  option 'manufacturerURL' 'oconcept.net'
+  option 'string_limit' '101'
+  option 'model_number' '1'
+config global 'storage'
+  option cache '1'
+  option db_file 'mediatomb.db'
+  
+  
