@@ -23,7 +23,7 @@ define Package/hammer-app-base
   TITLE:=Contains base files for H.A.M.M.E.R
   URL:=http://tarpediem.net
   MAINTAINER:=fishdaemon
-  DEPENDS:=+bash +bash-completion +openssl-util +luci-lib-lucid +nginx +php5-fastcgi +libsqlite3 +coreutils +php5-cli +shadow-useradd +shadow +shadow-userdel +shadow-usermod +coreutils-users +sudo +coreutils-groups +coreutils-chgrp +sed +coreutils-dd
+  DEPENDS:= +php5 +bash +bash-completion +openssl-util +luci-lib-lucid +nginx +php5-fastcgi +libsqlite3 +coreutils +php5-cli   +sudo +sed 
 
 endef
 define Build/Compile 
